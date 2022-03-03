@@ -1,0 +1,48 @@
+<template>
+  <el-table
+    :data="tableData"
+    stripe
+    style="width: 100%">
+    <el-table-column
+      prop="id"
+      label="序号"
+      width="180">
+    </el-table-column>
+    <el-table-column
+      prop="question"
+      label="题目"
+      width="180">
+    </el-table-column>
+    <el-table-column
+      prop="answer"
+      label="回答">
+    </el-table-column>
+  </el-table>
+</template>
+
+<script>
+  export default {
+    data() {
+      return {
+        tableData: []
+      }
+    },
+    mounted: function () {
+      this.loadBooks()
+    },
+    methods: {
+      loadBooks () {
+        var _this = this
+        this.$axios.get('/review').then(resp => {
+          if (resp && resp.data.code === 200) {
+            debugger
+            _this.tableData = resp.data.result
+          }
+        })
+      },
+      handleCurrentChange: function (currentPage) {
+        this.currentPage = currentPage
+      }
+    }
+  }
+</script>
