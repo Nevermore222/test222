@@ -38,8 +38,8 @@ public class ReviewServiceImpl implements IReviewService {
         Object reviewCache = redisService.get(key);
         if(reviewCache == null){
             Sort sort = new Sort(Sort.Direction.DESC, "id");
-            redisService.set(key,reviewDAO.findAll(sort).stream().peek(x -> x.setIsOK(true)).collect(Collectors.toList()));
-            return reviewDAO.findAll(sort).stream().peek(x -> x.setIsOK(true)).collect(Collectors.toList());
+            redisService.set(key,reviewDAO.findAll(sort).parallelStream().peek(x -> {x.setShowType("password");x.setIsOK(true);}).collect(Collectors.toList()));
+            return reviewDAO.findAll(sort).parallelStream().peek(x -> x.setShowType("password")).collect(Collectors.toList());
         }else{
             return CastUtils.objectConvertToList(reviewCache,Review.class);
         }

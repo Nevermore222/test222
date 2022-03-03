@@ -33,8 +33,15 @@ public class Review {
     private String type;
 
     /**
+     * showType
+     */
+    @Transient
+    private String showType;
+
+    /**
      * isOK
      */
     @Transient
     private Boolean isOK;
+
 }

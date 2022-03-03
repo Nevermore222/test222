@@ -5,17 +5,19 @@
     <el-table-column prop="question" label="题目" width="280">
       
     </el-table-column>
-    <el-table-column prop="answer" label="答案22"> 
+    <el-table-column prop="answer" label="答案"> 
       <template slot-scope="scope">
           <el-form :model="scope.row">
-            <el-form-item abel-width="160px" style="position: relative;">
-              <el-input v-if="true" v-model="scope.row.answer" :type="password" style="width:100%;hight:100%"></el-input>
-              <span v-else>{{scope.row.answer}}</span>
-            </el-form-item>
+              <el-input :type="scope.row.showType" v-model="scope.row.answer" style="width:100%;hight:100%"></el-input>
           </el-form>
         </template>
     </el-table-column>
-    <el-table-column label="隐藏答案" prop="" width="180" @click="hideAnswer"> </el-table-column>
+    <el-table-column label="操作" width="180"> 
+      <template slot-scope="scope">
+        <el-button @click.native="hideAnswer(scope.row)" v-if="scope.row.isOK">显示答案</el-button>
+        <el-button @click.native="hideAnswer(scope.row)" v-if="!scope.row.isOK">隐藏答案</el-button>
+      </template>
+    </el-table-column>
   </el-table>
   <el-dialog v-drag :visible.sync="detailsdialog" title="详情">
 	<div class="middle_modal_body">
@@ -44,9 +46,8 @@ export default {
   data() {
     return {
       detailsdialog: false,
-      passw: 'password',
       tableData: [],
-      detailData:[]
+      detailData:[],
     };
   },
   mounted: function () {
@@ -59,7 +60,6 @@ export default {
         if (resp && resp.data.code === 200) {
           debugger;
           _this.tableData = resp.data.result;
-          _this.tableData.isOK = true;
         }
       });
     },
@@ -72,8 +72,15 @@ export default {
       //赋值
       this.detailData = row;
     },
-    hideAnswer(){
-      
+    hideAnswer(row){
+      debugger
+      //更改答案的type属性
+      if(row.isOK){
+        row.showType = 'type';
+      }else{
+        row.showType = 'password';
+      }
+      row.isOK = !row.isOK
     }
   },
 };
