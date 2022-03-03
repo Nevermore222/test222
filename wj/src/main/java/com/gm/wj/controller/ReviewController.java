@@ -24,7 +24,7 @@ public class ReviewController {
     @RequestMapping(value = "/api/ExcelInsertGoodinStore", method = RequestMethod.POST,produces="application/json")
     @ResponseBody
     public Result ExcelInsertGoodinStore(@RequestParam("diaFile") MultipartFile excelFile) {
-        log.info("========进入导入excel方法========");
+        log.info("========进入导入excel方法1========");
         String name = excelFile.getOriginalFilename();
         try {
             if(reviewService.excelToList(excelFile.getInputStream())>0) {
