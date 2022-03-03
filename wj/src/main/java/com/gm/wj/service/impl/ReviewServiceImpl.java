@@ -33,7 +33,7 @@ public class ReviewServiceImpl implements IReviewService {
 
     @Override
     public List<Review> list() {
-        //首先判断redis内是否有缓存
+        //首先判断redis内是否有缓存000
         String key = "reviewList";
         Object reviewCache = redisService.get(key);
         if(reviewCache == null){
