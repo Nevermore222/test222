@@ -5,7 +5,7 @@
     <el-table-column prop="question" label="题目" width="280">
       
     </el-table-column>
-    <el-table-column prop="answer" label="答案"> 
+    <el-table-column prop="answer" label="答案22"> 
       <template slot-scope="scope">
           <el-form :model="scope.row">
             <el-form-item abel-width="160px" style="position: relative;">
