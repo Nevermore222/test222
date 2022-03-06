@@ -20,7 +20,9 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,8 +40,13 @@ public class ReviewServiceImpl implements IReviewService {
         Object reviewCache = redisService.get(key);
         if(reviewCache == null){
             Sort sort = new Sort(Sort.Direction.DESC, "id");
-            redisService.set(key,reviewDAO.findAll(sort).parallelStream().peek(x -> {x.setShowType("password");x.setIsOK(true);}).collect(Collectors.toList()));
-            return reviewDAO.findAll(sort).parallelStream().peek(x -> x.setShowType("password")).collect(Collectors.toList());
+            List<Review> reviewAll = reviewDAO.findAll(sort);
+            redisService.set(key, reviewAll.parallelStream().peek(x -> {x.setShowType("password");x.setIsOK(true);}).collect(Collectors.toList()));
+            //将所有涉及的分类都放在缓存中
+            String typeKey = "typeList";
+            List<String> collect = reviewAll.stream().map(Review::getType).distinct().collect(Collectors.toList());
+            redisService.setList(typeKey,collect);
+            return reviewAll.parallelStream().peek(x -> x.setShowType("password")).collect(Collectors.toList());
         }else{
             return CastUtils.objectConvertToList(reviewCache,Review.class);
         }
@@ -77,11 +84,28 @@ public class ReviewServiceImpl implements IReviewService {
             row.getCell(1).setCellType(CellType.STRING);
             String cell1 = row.getCell(1).getStringCellValue().trim();
             review.setAnswer(cell1);
+            row.getCell(2).setCellType(CellType.STRING);
+            String cell2 = row.getCell(2).getStringCellValue().trim();
+            review.setType(cell2);
             reviewsList.add(review);
         }
-//        reviewDAO.save(review);
         reviewDAO.saveAll(reviewsList);
+        Set<String> set = new HashSet<>();
+        set.add("reviewList");
+        set.add("typeList");
+        //更新数据库后删除redis缓存
+        redisService.delete(set);
         return 1;
+    }
+
+    @Override
+    public List<String> getAllType() {
+        return redisService.getList("typeList");
+    }
+
+    @Override
+    public List<Review> getReviewByType(String type) {
+        return reviewDAO.getReviewByType(type);
     }
 
 }

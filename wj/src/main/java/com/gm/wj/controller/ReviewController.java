@@ -16,9 +16,18 @@ public class ReviewController {
     @Autowired
     private IReviewService reviewService;
 
-    @GetMapping("/api/review")
-    public Result ReviewList(){
-        return ResultFactory.buildSuccessResult(reviewService.list());
+    @GetMapping("/api/review/{type}/ooo")
+    public Result ReviewList(@PathVariable("type") String type){
+        if(!"0".equals(type)){
+          return ResultFactory.buildSuccessResult(reviewService.getReviewByType(type));
+        }else{
+            return ResultFactory.buildSuccessResult(reviewService.list());
+        }
+    }
+
+    @GetMapping("/api/reviewType")
+    public Result ReviewTypeList(){
+        return ResultFactory.buildSuccessResult(reviewService.getAllType());
     }
 
     @RequestMapping(value = "/api/ExcelInsertGoodinStore", method = RequestMethod.POST,produces="application/json")

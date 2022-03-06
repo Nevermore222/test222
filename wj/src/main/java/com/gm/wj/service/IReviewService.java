@@ -13,4 +13,11 @@ public interface IReviewService {
     Review get(int id);
 
     int excelToList(InputStream inputStream) throws IOException, InvalidFormatException;
+
+    /**
+     * 题目所有种类集合
+     */
+    List<String> getAllType();
+
+    List<Review> getReviewByType(String type);
 }
