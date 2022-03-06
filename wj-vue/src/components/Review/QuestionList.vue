@@ -1,24 +1,30 @@
 <template>
 <div id="picture">
-  <div class="searchBox">
+  <el-form>
+    <el-form-item label="">
       <el-input prefix-icon="iconfont icon-sousuo" v-model="searchTableInfo" placeholder="请输入搜索内容" style="width:280px"></el-input>
-    </div>
+        <el-select v-model="currentGroup" placeholder="分类" @change="this.loadBooks">
+          <el-option  key="0" label="全部" :value="0" ></el-option>
+          <el-option  :key="item" :label="item" :value="item" v-for="item in typeArray"></el-option>
+        </el-select>
+      </el-form-item>
+  </el-form>
   <el-table 
-  :data="tableData.slice((currentPage-1)*pageSize,currentPage*pageSize)"
+    :data="tableData.slice((currentPage-1)*pageSize,currentPage*pageSize)"
     :show-header="true"
     :height="$store.state.clientHeight - 134"
     @selection-change="handleSelectionChange"
     style="width: 100%; overflow-y: auto;"
     stripe 
     @row-dblclick="dataRow">
-    <el-table-column prop="id" label="序号" width="180"> </el-table-column>
-    <el-table-column prop="question" label="题目" width="280">
+    <el-table-column prop="type" label="类型" width="180"> </el-table-column>
+    <el-table-column prop="question" label="题目" width="320">
       
     </el-table-column>
     <el-table-column prop="answer" label="答案" :show-overflow-tooltip="true"> 
       <template slot-scope="scope">
           <el-form :model="scope.row">
-              <el-input :type="scope.row.showType" disabled onmouseover="this.title=this.value" v-model="scope.row.answer" style="width:100%;"></el-input>
+              <el-input :type="scope.row.showType" onmouseover="this.title=this.value" v-model="scope.row.answer" style="width:100%;"></el-input>
           </el-form>
         </template>
     </el-table-column>
@@ -72,7 +78,9 @@ data() {
     currentPage: 1,
     // 每页多少条
     pageSize: 6,
-    getSearchInfo:[]
+    getSearchInfo:[],
+    typeArray:[],
+    currentGroup:''
   };
 },
 // mounted: function () {
@@ -83,7 +91,6 @@ data() {
 computed: {
     // 根据计算属性模糊搜索
     tableData () {
-      debugger
       const searchTableInfo = this.searchTableInfo
       if (searchTableInfo) {
         // filter() 方法创建一个新的数组，新数组中的元素是通过检查指定数组中符合条件的所有元素。
@@ -110,11 +117,35 @@ computed: {
   methods: {
     loadBooks() {
       var _this = this;
-      this.$axios.get("/review").then((resp) => {
+      let url='';
+      if(_this.currentGroup==0 || _this.currentGroup === ""){
+          url='review/'+'0'+'/ooo';
+      }else{
+          url= 'review/'+_this.currentGroup+'/ooo';
+      }
+      this.$axios.get(url).then((resp) => {
         if (resp && resp.data.code === 200) {
           _this.getSearchInfo = resp.data.result;
+          this.loadTypes();
         }
       });
+    },
+    loadTypes(){
+      var _this = this;
+      this.$axios.get("/reviewType").then((resp) => {
+        if (resp && resp.data.code === 200) {
+          _this.typeArray = resp.data.result;
+        }
+      });
+    },
+    getAllType(){
+      let that=this;
+      let url='';
+      if(that.currentGroup==0){
+          url='review';
+      }else{
+          url= '/reviewByType?type='+that.currentGroup
+      }
     },
     handleCurrentChange: function (currentPage) {
       this.currentPage = currentPage;
@@ -128,7 +159,7 @@ computed: {
     hideAnswer(row){
       //更改答案的type属性
       if(row.isOK){
-        row.showType = 'type';
+        row.showType = 'textarea';
       }else{
         row.showType = 'password';
       }
