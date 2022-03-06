@@ -1,14 +1,24 @@
 <template>
-<div>
-  <el-table :data="tableData" stripe style="width: 100%" @row-dblclick="dataRow">
+<div id="picture">
+  <div class="searchBox">
+      <el-input prefix-icon="iconfont icon-sousuo" v-model="searchTableInfo" placeholder="请输入搜索内容" style="width:280px"></el-input>
+    </div>
+  <el-table 
+  :data="tableData.slice((currentPage-1)*pageSize,currentPage*pageSize)"
+    :show-header="true"
+    :height="$store.state.clientHeight - 134"
+    @selection-change="handleSelectionChange"
+    style="width: 100%; overflow-y: auto;"
+    stripe 
+    @row-dblclick="dataRow">
     <el-table-column prop="id" label="序号" width="180"> </el-table-column>
     <el-table-column prop="question" label="题目" width="280">
       
     </el-table-column>
-    <el-table-column prop="answer" label="答案"> 
+    <el-table-column prop="answer" label="答案" :show-overflow-tooltip="true"> 
       <template slot-scope="scope">
           <el-form :model="scope.row">
-              <el-input :type="scope.row.showType" v-model="scope.row.answer" style="width:100%;hight:100%"></el-input>
+              <el-input :type="scope.row.showType" disabled onmouseover="this.title=this.value" v-model="scope.row.answer" style="width:100%;"></el-input>
           </el-form>
         </template>
     </el-table-column>
@@ -19,18 +29,27 @@
       </template>
     </el-table-column>
   </el-table>
-  <el-dialog v-drag :visible.sync="detailsdialog" title="详情">
+  <el-pagination
+    @size-change="handleSizeChange"
+    @current-change="handleCurrentChange"
+    :current-page="currentPage"
+    :page-sizes="[6, 10, 20, 30, 50, 100]"
+    :page-size="pageSize"
+    layout="total, sizes, prev, pager, next, jumper"
+    :total="tableData.length">
+</el-pagination>
+  <el-dialog :visible.sync="detailsdialog" title="详情" class="dialog">
 	<div class="middle_modal_body">
 		<el-form ref="details" :model="detailData" label-width="140px">
-			<el-row>
-				<el-col :span="12">
-					<el-form-item label="题目" :show-overflow-tooltip="true">
-					<el-input v-model="detailData.question" disabled style="width:100%;"></el-input>
+			<el-row> 
+				<el-col :span="15" style="width:100%">
+					<el-form-item label="题目">
+					<el-input type="textarea" v-model="detailData.question" disabled style="width:100%;"></el-input>
 					</el-form-item>
 				</el-col>
-				<el-col :span="12">
-					<el-form-item label="回答" :show-overflow-tooltip="true">
-					<el-input v-model="detailData.answer" disabled style="width:100%;"></el-input>
+				<el-col :span="15" style="width:100%">
+					<el-form-item label="回答">
+					<el-input type="textarea" onmouseover="this.title=this.value" v-model="detailData.answer"  style="width:100%;" ></el-input>
 					</el-form-item>
 				</el-col>
 			</el-row>
@@ -43,23 +62,57 @@
 
 <script>
 export default {
-  data() {
-    return {
-      detailsdialog: false,
-      tableData: [],
-      detailData:[],
-    };
-  },
-  mounted: function () {
-    this.loadBooks();
+data() {
+  return {
+    //搜索条件
+    searchTableInfo:"",
+    detailsdialog: false,
+    detailData:[],
+    // 当前页
+    currentPage: 1,
+    // 每页多少条
+    pageSize: 6,
+    getSearchInfo:[]
+  };
+},
+// mounted: function () {
+//   this.loadBooks();
+//   this.getSearchInfo = tableData;
+//   console.log(this.getSearchInfo)
+// },
+computed: {
+    // 根据计算属性模糊搜索
+    tableData () {
+      debugger
+      const searchTableInfo = this.searchTableInfo
+      if (searchTableInfo) {
+        // filter() 方法创建一个新的数组，新数组中的元素是通过检查指定数组中符合条件的所有元素。
+        // 注意： filter() 不会对空数组进行检测。
+        // 注意： filter() 不会改变原始数组。
+        return this.getSearchInfo.filter(data => {
+          console.log("success"+data)
+          // some() 方法用于检测数组中的元素是否满足指定条件;
+          // some() 方法会依次执行数组的每个元素：
+          // 如果有一个元素满足条件，则表达式返回true , 剩余的元素不会再执行检测;
+          // 如果没有满足条件的元素，则返回false。
+          // 注意： some() 不会对空数组进行检测。
+          // 注意： some() 不会改变原始数组。
+          return Object.keys(data).some(key => {
+            // indexOf() 返回某个指定的字符在某个字符串中首次出现的位置，如果没有找到就返回-1；
+            // 该方法对大小写敏感！所以之前需要toLowerCase()方法将所有查询到内容变为小写。
+            return String(data[key]).toLowerCase().indexOf(searchTableInfo) > -1
+          })
+        })
+      }
+      return this.getSearchInfo
+    }
   },
   methods: {
     loadBooks() {
       var _this = this;
       this.$axios.get("/review").then((resp) => {
         if (resp && resp.data.code === 200) {
-          debugger;
-          _this.tableData = resp.data.result;
+          _this.getSearchInfo = resp.data.result;
         }
       });
     },
@@ -73,7 +126,6 @@ export default {
       this.detailData = row;
     },
     hideAnswer(row){
-      debugger
       //更改答案的type属性
       if(row.isOK){
         row.showType = 'type';
@@ -81,7 +133,34 @@ export default {
         row.showType = 'password';
       }
       row.isOK = !row.isOK
+    },
+    // 每页多少条
+    handleSizeChange(val) {
+        this.pageSize = val;
+    },
+    // 当前页
+    handleCurrentChange(val) {
+        this.currentPage = val;
+    },
+    //操作多选
+    handleSelectionChange(val) {
+      this.multipleSelection = val;
     }
   },
+    created(){
+        this.loadBooks();
+    }
 };
 </script>
+<style scoped>
+  #picture {
+    background: url("../../assets/img/review/bc2.jpeg") repeat;
+  }
+  .dialog {
+    background: url("../../assets/img/review/bc2.jpeg") repeat;
+  }
+  .el-table .cell, .el-table th div {
+	padding-right: 0;
+}
+
+</style>
